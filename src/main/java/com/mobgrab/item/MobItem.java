@@ -2,6 +2,7 @@ package com.mobgrab.item;
 
 import com.mobgrab.MobGrabMod;
 import com.mobgrab.config.MobGrabConfig;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
@@ -108,7 +109,12 @@ public final class MobItem {
 		Optional<String> id = stored.getString("id");
 		if (id.isEmpty()) return Optional.empty();
 
-		Optional<EntityType<?>> type = EntityType.byString(id.get());
+		// Resolved through the registry rather than EntityType.byString, which 26.1 has and
+		// 26.2 removed. This lookup is present in both, so one jar covers the whole range.
+		Identifier typeId = Identifier.tryParse(id.get());
+		Optional<EntityType<?>> type = typeId == null
+				? Optional.empty()
+				: BuiltInRegistries.ENTITY_TYPE.getOptional(typeId);
 		if (type.isEmpty()) {
 			// The item names a mob this version does not have — a 26.2 mob on a 26.1 server, say.
 			MobGrabMod.LOGGER.warn("A MobGrab item holds unknown entity type {}", id.get());

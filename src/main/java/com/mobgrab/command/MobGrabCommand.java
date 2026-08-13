@@ -6,6 +6,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
+import net.minecraft.resources.Identifier;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
@@ -143,9 +144,11 @@ public final class MobGrabCommand {
 	private static int toggle(CommandContext<CommandSourceStack> context, boolean enabled) {
 		// IdentifierArgument parses "minecraft:cow" and bare "cow" alike; Brigadier's plain
 		// string argument cannot read an unquoted colon at all.
-		String id = IdentifierArgument.getId(context, "mob").toString();
+		Identifier identifier = IdentifierArgument.getId(context, "mob");
+		String id = identifier.toString();
 
-		if (EntityType.byString(id).isEmpty()) {
+		// Registry lookup rather than EntityType.byString, which 26.2 removed.
+		if (BuiltInRegistries.ENTITY_TYPE.getOptional(identifier).isEmpty()) {
 			context.getSource().sendFailure(
 					Component.literal("There is no entity called '" + id + "' on this version."));
 			return 0;
