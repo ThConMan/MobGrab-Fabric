@@ -39,17 +39,24 @@ The head carries the mob's full state as tooltip lore, ported from the plugin:
 - Type, custom name, exact health, and tamed owner
 - **Villager**: profession, level, and every trade — `6x Pumpkin -> Emerald` — with
   exhausted trades struck through, and enchanted-book trades naming the enchantment
-- **Variants**: horse colour and markings, cat type and collar, wolf collar, sheep colour,
-  axolotl, frog, parrot, fox, rabbit, mooshroom, llama colour and strength, panda gene,
-  tropical fish pattern and both colours, shulker colour, copper golem weathering
+- **Variants**: horse colour and markings, cat type and collar, wolf coat and collar, sheep
+  colour, axolotl, frog, parrot, fox, rabbit, mooshroom, cow, pig, chicken, salmon size,
+  zombie nautilus, llama colour and strength, panda gene, tropical fish pattern and both
+  colours, shulker colour, copper golem weathering
+- **Wandering traders** list their stock, and **zombie villagers** keep the profession they
+  will return to when cured
+- **Endermen** name the block they are carrying
 - **States**: charged creeper, sheared, screaming goat and missing horns, bee nectar/stung/angry,
   slime and magma cube size, phantom size, pufferfish puff, shivering strider, active creaking,
   baby, sitting, and anger on any mob that tracks it
-- **Equipment**: every worn and held item, with its enchantments listed underneath
+- **Equipment**: every worn and held item with its enchantments, including body and saddle
+  slots — horse armour, llama carpets, wolf armour, saddles and happy ghast harnesses
 
 Turn it off with `showLore: false` if you prefer a bare head.
 
-Trade lines carry no emoji item icons, unlike the plugin's.
+Trade lines carry no emoji item icons, unlike the plugin's. Everything else matches it,
+including the wording where vanilla and Bukkit disagree: a rabbit still reads "Salt And
+Pepper" rather than vanilla's "Salt", and a parrot "Red" rather than "Red Blue".
 
 ## Optional client menu and keys
 

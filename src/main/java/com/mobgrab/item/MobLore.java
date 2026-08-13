@@ -12,9 +12,15 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.NeutralMob;
+import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.animal.axolotl.Axolotl;
 import net.minecraft.world.entity.animal.bee.Bee;
+import net.minecraft.world.entity.animal.chicken.Chicken;
+import net.minecraft.world.entity.animal.cow.Cow;
+import net.minecraft.world.entity.animal.fish.Salmon;
+import net.minecraft.world.entity.animal.nautilus.ZombieNautilus;
+import net.minecraft.world.entity.animal.pig.Pig;
 import net.minecraft.world.entity.animal.cow.MushroomCow;
 import net.minecraft.world.entity.animal.equine.Horse;
 import net.minecraft.world.entity.animal.equine.Llama;
@@ -35,7 +41,12 @@ import net.minecraft.world.entity.monster.Shulker;
 import net.minecraft.world.entity.monster.Phantom;
 import net.minecraft.world.entity.monster.Strider;
 import net.minecraft.world.entity.monster.creaking.Creaking;
+import net.minecraft.world.entity.monster.EnderMan;
+import net.minecraft.world.entity.monster.zombie.ZombieVillager;
+import net.minecraft.world.entity.npc.villager.AbstractVillager;
 import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.world.entity.npc.wanderingtrader.WanderingTrader;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.item.trading.MerchantOffer;
@@ -84,8 +95,12 @@ public final class MobLore {
 					ChatFormatting.RED));
 		}
 
-		if (entity instanceof TamableAnimal tamable && tamable.isTame()) {
-			LivingEntity owner = tamable.getOwner();
+		// OwnableEntity rather than TamableAnimal: vanilla keeps horses, donkeys, mules and
+		// llamas off TamableAnimal, but the plugin's Bukkit Tameable covered them, so matching
+		// on the narrower type would silently drop the owner line for every tamed mount.
+		// A non-null owner already means tamed, so no separate tame check is needed.
+		if (entity instanceof OwnableEntity ownable) {
+			LivingEntity owner = ownable.getOwner();
 			// Null whenever the owner is offline or out of range, which is most of the time.
 			if (owner != null) {
 				lore.add(label("Owner", owner.getName().getString(), ChatFormatting.GREEN));
@@ -103,7 +118,7 @@ public final class MobLore {
 		}
 
 		lore.add(Component.empty());
-		lore.add(line("Right-click a block to place", ChatFormatting.YELLOW));
+		lore.add(line("Right-click to place", ChatFormatting.YELLOW));
 		return lore;
 	}
 
@@ -118,9 +133,28 @@ public final class MobLore {
 						ChatFormatting.YELLOW));
 				addTrades(lore, villager);
 			}
+			// A wandering trader's stock is the whole reason to pocket one.
+			case WanderingTrader trader -> addTrades(lore, trader);
+			// A zombie villager still remembers the job it will get back on curing.
+			case ZombieVillager zombie -> {
+				String profession = holderName(zombie.getVillagerData().profession());
+				if (!profession.isEmpty() && !profession.equalsIgnoreCase("None")) {
+					lore.add(label("Profession", profession, ChatFormatting.YELLOW));
+				}
+				lore.add(label("Level", String.valueOf(zombie.getVillagerData().level()),
+						ChatFormatting.YELLOW));
+				if (zombie.isConverting()) lore.add(tag("Curing", ChatFormatting.GREEN));
+			}
+			case EnderMan enderman -> {
+				BlockState carried = enderman.getCarriedBlock();
+				if (carried != null && !carried.isAir()) {
+					lore.add(label("Carrying", carried.getBlock().getName().getString(),
+							ChatFormatting.LIGHT_PURPLE));
+				}
+			}
 			case Horse horse -> {
 				lore.add(label("Color", variantName(horse.getVariant()), ChatFormatting.WHITE));
-				lore.add(label("Style", variantName(horse.getMarkings()), ChatFormatting.WHITE));
+				lore.add(label("Style", markingsName(horse.getMarkings()), ChatFormatting.WHITE));
 			}
 			case Cat cat -> {
 				lore.add(label("Type", holderName(cat.getVariant()), ChatFormatting.WHITE));
@@ -129,6 +163,10 @@ public final class MobLore {
 				}
 			}
 			case Wolf wolf -> {
+				// Wolf.getVariant() is private, unlike every other animal's, so the coat comes
+				// from save data instead. Stored as a registry id string under "variant".
+				String coat = nbtVariant(data, "variant");
+				if (!coat.isEmpty()) lore.add(label("Type", coat, ChatFormatting.WHITE));
 				if (wolf.isTame()) {
 					lore.add(label("Collar", dye(wolf.getCollarColor()), ChatFormatting.WHITE));
 				}
@@ -142,13 +180,27 @@ public final class MobLore {
 			case Frog frog ->
 					lore.add(label("Variant", holderName(frog.getVariant()), ChatFormatting.WHITE));
 			case Parrot parrot ->
-					lore.add(label("Color", variantName(parrot.getVariant()), ChatFormatting.WHITE));
+					lore.add(label("Color", parrotName(parrot.getVariant()), ChatFormatting.WHITE));
 			case Fox fox ->
 					lore.add(label("Type", variantName(fox.getVariant()), ChatFormatting.WHITE));
 			case Rabbit rabbit ->
-					lore.add(label("Type", variantName(rabbit.getVariant()), ChatFormatting.WHITE));
+					lore.add(label("Type", rabbitName(rabbit.getVariant()), ChatFormatting.WHITE));
+			// MushroomCow must stay ahead of Cow: it is a subclass, and a pattern switch takes
+			// the first arm that fits.
 			case MushroomCow mooshroom ->
 					lore.add(label("Variant", variantName(mooshroom.getVariant()), ChatFormatting.WHITE));
+			// Cows, pigs, chickens and salmon gained variants after the plugin was written;
+			// the nautilus pair arrived with 26.1.
+			case Cow cow ->
+					lore.add(label("Variant", holderName(cow.getVariant()), ChatFormatting.WHITE));
+			case Pig pig ->
+					lore.add(label("Variant", holderName(pig.getVariant()), ChatFormatting.WHITE));
+			case Chicken chicken ->
+					lore.add(label("Variant", holderName(chicken.getVariant()), ChatFormatting.WHITE));
+			case Salmon salmon ->
+					lore.add(label("Size", variantName(salmon.getVariant()), ChatFormatting.WHITE));
+			case ZombieNautilus nautilus ->
+					lore.add(label("Variant", holderName(nautilus.getVariant()), ChatFormatting.WHITE));
 			case Llama llama -> {
 				lore.add(label("Color", variantName(llama.getVariant()), ChatFormatting.WHITE));
 				lore.add(label("Strength", String.valueOf(llama.getStrength()), ChatFormatting.WHITE));
@@ -223,7 +275,7 @@ public final class MobLore {
 		}
 	}
 
-	private static void addTrades(List<Component> lore, Villager villager) {
+	private static void addTrades(List<Component> lore, AbstractVillager villager) {
 		List<MerchantOffer> offers;
 		try {
 			offers = villager.getOffers();
@@ -242,7 +294,7 @@ public final class MobLore {
 				trade.append(Component.literal(" + ").withStyle(ChatFormatting.DARK_GRAY))
 						.append(tradeItem(offer.getCostB()));
 			}
-			trade.append(Component.literal(" -> ").withStyle(ChatFormatting.DARK_GRAY))
+			trade.append(Component.literal(" → ").withStyle(ChatFormatting.DARK_GRAY))
 					.append(tradeItem(offer.getResult()));
 
 			// A trade the villager has exhausted still shows, struck through, because knowing
@@ -288,6 +340,11 @@ public final class MobLore {
 		addEquipmentLine(lore, "Boots", living.getItemBySlot(EquipmentSlot.FEET));
 		addEquipmentLine(lore, "Holding", living.getItemBySlot(EquipmentSlot.MAINHAND));
 		addEquipmentLine(lore, "Off Hand", living.getItemBySlot(EquipmentSlot.OFFHAND));
+		// The plugin read only the six humanoid slots, which silently dropped horse armour,
+		// llama carpets, wolf armour, saddles and a happy ghast's harness — all of them things
+		// you would want to know are coming along before you pocket the mob.
+		addEquipmentLine(lore, "Body", living.getItemBySlot(EquipmentSlot.BODY));
+		addEquipmentLine(lore, "Saddle", living.getItemBySlot(EquipmentSlot.SADDLE));
 	}
 
 	private static void addEquipmentLine(List<Component> lore, String slot, ItemStack stack) {
@@ -309,10 +366,10 @@ public final class MobLore {
 				.withStyle(style -> style.withItalic(false).withColor(color));
 	}
 
-	/** A standalone state, e.g. "Charged". Marked with a bullet so it reads apart from labels. */
+	/** A standalone state, e.g. "Charged". Diamond bullet and bold, as the plugin renders it. */
 	private static Component tag(String text, ChatFormatting color) {
-		return Component.literal("- ").withStyle(ChatFormatting.DARK_GRAY)
-				.append(Component.literal(text).withStyle(color))
+		return Component.literal("◆ ").withStyle(ChatFormatting.DARK_GRAY)
+				.append(Component.literal(text).withStyle(color, ChatFormatting.BOLD))
 				.withStyle(style -> style.withItalic(false));
 	}
 
@@ -321,6 +378,48 @@ public final class MobLore {
 				.withStyle(style -> style.withItalic(false).withColor(ChatFormatting.DARK_GRAY))
 				.append(Component.literal(value)
 						.withStyle(style -> style.withItalic(false).withColor(valueColor)));
+	}
+
+	/**
+	 * Vanilla renamed three rabbit variants relative to the names the plugin showed. Mapped back
+	 * so a rabbit reads the same on both: Bukkit's BLACK_AND_WHITE is vanilla's WHITE_SPLOTCHED,
+	 * SALT_AND_PEPPER is SALT, and THE_KILLER_BUNNY is EVIL.
+	 */
+	private static String rabbitName(Object variant) {
+		String raw = rawName(variant);
+		return switch (raw) {
+			case "white_splotched" -> "Black And White";
+			case "salt" -> "Salt And Pepper";
+			case "evil" -> "The Killer Bunny";
+			default -> prettify(raw);
+		};
+	}
+
+	/**
+	 * Vanilla names two parrot colours after both their feather colours; the plugin showed the
+	 * Bukkit names, which pick one. RED_BLUE reads as "Red" and YELLOW_BLUE as "Cyan".
+	 */
+	private static String parrotName(Object variant) {
+		String raw = rawName(variant);
+		return switch (raw) {
+			case "red_blue" -> "Red";
+			case "yellow_blue" -> "Cyan";
+			default -> prettify(raw);
+		};
+	}
+
+	/** Bukkit spelled this style WHITEFIELD; vanilla spells it WHITE_FIELD. */
+	private static String markingsName(Object markings) {
+		String raw = rawName(markings);
+		return raw.equals("white_field") ? "Whitefield" : prettify(raw);
+	}
+
+	/** A variant stored in save data as a registry id, for mobs whose accessor is not public. */
+	private static String nbtVariant(CompoundTag data, String key) {
+		return data.getString(key).map(id -> {
+			int colon = id.indexOf(':');
+			return prettify(colon >= 0 ? id.substring(colon + 1) : id);
+		}).orElse("");
 	}
 
 	/** Registry-backed variants (cat, frog, villager profession, enchantment) name themselves by key. */
@@ -333,10 +432,15 @@ public final class MobLore {
 
 	/** Plain enum or StringRepresentable variants (horse colour, fox type, panda gene). */
 	private static String variantName(Object variant) {
+		return prettify(rawName(variant));
+	}
+
+	/** The underlying lowercase identifier of an enum or StringRepresentable value. */
+	private static String rawName(Object variant) {
 		if (variant == null) return "";
-		if (variant instanceof StringRepresentable named) return prettify(named.getSerializedName());
-		if (variant instanceof Enum<?> value) return prettify(value.name());
-		return prettify(variant.toString());
+		if (variant instanceof StringRepresentable named) return named.getSerializedName();
+		if (variant instanceof Enum<?> value) return value.name().toLowerCase(Locale.ROOT);
+		return variant.toString().toLowerCase(Locale.ROOT);
 	}
 
 	private static String dye(Object color) {
