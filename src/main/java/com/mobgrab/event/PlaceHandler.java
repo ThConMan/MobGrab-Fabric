@@ -35,7 +35,10 @@ public final class PlaceHandler {
 
 		if (!config.enabled) return InteractionResult.PASS;
 		if (!MobItem.isMobItem(held)) return InteractionResult.PASS;
-		if (config.isDimensionDisabled(level.dimension().identifier().toString())) return InteractionResult.PASS;
+		if (config.hasDimensionRestrictions()
+				&& config.isDimensionDisabled(level.dimension().identifier().toString())) {
+			return InteractionResult.PASS;
+		}
 
 		if (level.isClientSide()) return InteractionResult.SUCCESS;
 		if (!(level instanceof ServerLevel serverLevel)) return InteractionResult.PASS;
@@ -52,9 +55,8 @@ public final class PlaceHandler {
 		}
 
 		EntityType<?> type = grabbed.get().type();
-		String entityId = EntityType.getKey(type).toString();
 		// An item can outlive the toggle that allowed it, so re-check rather than trusting it.
-		if (!config.isMobEnabled(entityId)) {
+		if (!config.isMobEnabled(type)) {
 			GrabHandler.refuse(player, "That mob cannot be placed here.");
 			return InteractionResult.FAIL;
 		}
@@ -69,7 +71,7 @@ public final class PlaceHandler {
 			entity = EntityType.loadEntityRecursive(type, grabbed.get().data(), serverLevel,
 					EntitySpawnReason.SPAWN_ITEM_USE, EntityProcessor.NOP);
 		} catch (Exception e) {
-			MobGrabMod.LOGGER.error("Could not rebuild {} from a mob item", entityId, e);
+			MobGrabMod.LOGGER.error("Could not rebuild {} from a mob item", EntityType.getKey(type), e);
 			GrabHandler.refuse(player, "That mob could not be placed.");
 			return InteractionResult.FAIL;
 		}

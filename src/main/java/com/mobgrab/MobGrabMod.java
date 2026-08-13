@@ -38,9 +38,13 @@ public final class MobGrabMod implements ModInitializer {
 		reload();
 
 		MobGrabEvents.register();
-		CommandRegistrationCallback.EVENT.register(
-				(dispatcher, buildContext, selection) ->
-						MobGrabCommand.register(dispatcher, buildContext, selection));
+		// Checked when the command tree is built rather than here, because that happens after
+		// the config has been read and lets `enableCommands` actually suppress registration.
+		CommandRegistrationCallback.EVENT.register((dispatcher, buildContext, selection) -> {
+			if (config().enableCommands) {
+				MobGrabCommand.register(dispatcher, buildContext, selection);
+			}
+		});
 
 		LOGGER.info("MobGrab ready — sneak + right-click a mob to pick it up");
 	}

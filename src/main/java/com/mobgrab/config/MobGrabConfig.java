@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.mobgrab.MobGrabMod;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.world.entity.EntityType;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Everything MobGrab can be told to do, as one JSON file in {@code config/mobgrab.json}.
@@ -39,6 +41,11 @@ public final class MobGrabConfig {
 
 	/** Master switch. When false MobGrab does nothing at all. */
 	public boolean enabled = true;
+
+	/** Register the /mobgrab command tree. Turn off on servers that drive everything from
+	 *  this file; grabbing and placing are unaffected either way. Takes effect on restart,
+	 *  because Minecraft builds its command tree once at startup. */
+	public boolean enableCommands = true;
 
 	/** Require the player to be sneaking to grab. Off means a bare right-click grabs, which
 	 *  collides with riding, trading, breeding and shearing — leave it on unless you mean it. */
@@ -205,6 +212,31 @@ public final class MobGrabConfig {
 		Boolean listed = mobs.get(entityId);
 		if (listed != null) return listed;
 		return blacklistMode || allowNewMobsByDefault;
+	}
+
+	/**
+	 * Resolved answers per entity type. {@code transient} keeps it out of the JSON.
+	 *
+	 * <p>This exists because the alternative — turning the type back into an id string on
+	 * every interaction — allocates a string every time any player right-clicks any mob,
+	 * whether or not MobGrab ends up doing anything.
+	 */
+	private transient volatile Map<EntityType<?>, Boolean> resolvedMobs = new ConcurrentHashMap<>();
+
+	public boolean isMobEnabled(EntityType<?> type) {
+		return resolvedMobs.computeIfAbsent(type, t -> isMobEnabled(EntityType.getKey(t).toString()));
+	}
+
+	/** Sets a toggle and drops the resolved cache, so command edits take effect immediately. */
+	public void setMobEnabled(String entityId, boolean allowed) {
+		mobs.put(entityId, allowed);
+		resolvedMobs = new ConcurrentHashMap<>();
+	}
+
+	/** True when {@link #disabledDimensions} is worth consulting at all. Checked first so the
+	 *  default empty list costs nothing instead of building a dimension id string per click. */
+	public boolean hasDimensionRestrictions() {
+		return !disabledDimensions.isEmpty();
 	}
 
 	public boolean isDimensionDisabled(String dimensionId) {

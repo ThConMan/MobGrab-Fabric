@@ -35,6 +35,12 @@ public final class MobGrabCommand {
 	public static void register(CommandDispatcher<CommandSourceStack> dispatcher,
 	                            CommandBuildContext buildContext, Commands.CommandSelection selection) {
 		dispatcher.register(Commands.literal("mobgrab")
+				// Without an executor here, a bare "/mobgrab" is merely a prefix of valid
+				// commands and Brigadier rejects it as an incomplete command. Listing the
+				// subcommands is the useful thing to do with it.
+				.executes(MobGrabCommand::help)
+				.then(Commands.literal("help")
+						.executes(MobGrabCommand::help))
 				.then(Commands.literal("status")
 						.executes(MobGrabCommand::status))
 				.then(Commands.literal("reload")
@@ -54,6 +60,37 @@ public final class MobGrabCommand {
 						.then(Commands.argument("mob", IdentifierArgument.id())
 								.suggests(MOB_IDS)
 								.executes(context -> toggle(context, false)))));
+	}
+
+	/**
+	 * What "/mobgrab" on its own does. Only lists what the caller can actually run, so a
+	 * player without operator permission is not shown admin subcommands.
+	 */
+	private static int help(CommandContext<CommandSourceStack> context) {
+		CommandSourceStack source = context.getSource();
+		boolean admin = source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
+
+		source.sendSuccess(() -> Component.literal("MobGrab")
+				.withStyle(ChatFormatting.GOLD)
+				.append(Component.literal(" — sneak + right-click a mob to pick it up, "
+						+ "right-click a block to put it back.").withStyle(ChatFormatting.GRAY)), false);
+		usage(source, "/mobgrab status", "show current settings");
+		if (admin) {
+			usage(source, "/mobgrab reload", "re-read config/mobgrab.json");
+			usage(source, "/mobgrab fireproof <true|false>", "fireproof newly grabbed mobs");
+			usage(source, "/mobgrab enable <mob>", "allow a mob to be grabbed");
+			usage(source, "/mobgrab disable <mob>", "stop a mob being grabbed");
+		} else {
+			source.sendSuccess(() -> Component.literal(
+					"Everything else is configured in config/mobgrab.json.")
+					.withStyle(ChatFormatting.DARK_GRAY), false);
+		}
+		return 1;
+	}
+
+	private static void usage(CommandSourceStack source, String command, String description) {
+		source.sendSuccess(() -> Component.literal(command).withStyle(ChatFormatting.YELLOW)
+				.append(Component.literal(" - " + description).withStyle(ChatFormatting.GRAY)), false);
 	}
 
 	private static int status(CommandContext<CommandSourceStack> context) {
@@ -115,7 +152,7 @@ public final class MobGrabCommand {
 		}
 
 		MobGrabConfig config = MobGrabMod.config();
-		config.mobs.put(id, enabled);
+		config.setMobEnabled(id, enabled);
 		config.save();
 		context.getSource().sendSuccess(() -> Component.literal(
 				id + " is now " + (enabled ? "grabbable" : "not grabbable") + ".")

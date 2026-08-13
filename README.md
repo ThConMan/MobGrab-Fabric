@@ -41,6 +41,7 @@ on the next start, with their defaults, rather than staying invisible.
 | Option | Default | Meaning |
 |---|---|---|
 | `enabled` | `true` | Master switch |
+| `enableCommands` | `true` | Register the `/mobgrab` command tree at all. Grabbing and placing work either way. Applies on restart |
 | `requireSneak` | `true` | Require sneaking to grab. Turning this off makes a bare right-click grab, which collides with trading, riding and shearing |
 | `requireOp` | `false` | Restrict to operators. **Off** by default so singleplayer and hardcore need no setup |
 | `cooldownSeconds` | `1.0` | Per-player spacing between grabs, counted in game ticks so a paused world does not burn it |
@@ -89,6 +90,7 @@ except `status` needs permission level 2 (`Permissions.COMMANDS_GAMEMASTER`).
 
 | Command | Description |
 |---|---|
+| `/mobgrab` or `/mobgrab help` | List the subcommands you can run |
 | `/mobgrab status` | Current settings and how many mobs are grabbable |
 | `/mobgrab reload` | Re-read `config/mobgrab.json` |
 | `/mobgrab fireproof <true\|false>` | Toggle fireproofing for future grabs |
@@ -102,6 +104,10 @@ except `status` needs permission level 2 (`Permissions.COMMANDS_GAMEMASTER`).
   can never delete one.
 - The stored UUID is dropped when a mob becomes an item, so a duplicated item cannot spawn
   two entities claiming to be the same one and corrupt leads, mounts or pet ownership.
+- Grabbing a ridden mob (a chicken jockey, a saddled horse) takes the whole stack: the
+  riders go into the item rather than being left standing in the world, so nothing is
+  duplicated when it is placed again.
+- A mob with a **player** on it cannot be grabbed at all.
 
 ## Differences from the Paper plugin
 

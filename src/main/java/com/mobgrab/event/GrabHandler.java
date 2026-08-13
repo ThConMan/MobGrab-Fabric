@@ -32,10 +32,11 @@ public final class GrabHandler {
 		if (!(entity instanceof LivingEntity)) return InteractionResult.PASS;
 		if (entity instanceof Player) return InteractionResult.PASS;
 		if (config.requireSneak && !player.isShiftKeyDown()) return InteractionResult.PASS;
-		if (config.isDimensionDisabled(level.dimension().identifier().toString())) return InteractionResult.PASS;
-
-		String entityId = EntityType.getKey(entity.getType()).toString();
-		if (!config.isMobEnabled(entityId)) return InteractionResult.PASS;
+		if (config.hasDimensionRestrictions()
+				&& config.isDimensionDisabled(level.dimension().identifier().toString())) {
+			return InteractionResult.PASS;
+		}
+		if (!config.isMobEnabled(entity.getType())) return InteractionResult.PASS;
 
 		// Everything past here is a decision only the server can make, and in singleplayer this
 		// callback runs on both sides. Claiming the interaction on the client too stops the
@@ -45,6 +46,13 @@ public final class GrabHandler {
 
 		if (config.requireOp && !player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
 			refuse(player, "You do not have permission to pick up mobs.");
+			return InteractionResult.FAIL;
+		}
+
+		// Refuse a mob somebody is sitting on. Grabbing it would mean discarding the whole
+		// passenger stack, and that stack would include a player entity.
+		if (entity.getSelfAndPassengers().anyMatch(riding -> riding instanceof Player)) {
+			refuse(player, "Someone is riding that.");
 			return InteractionResult.FAIL;
 		}
 
@@ -60,7 +68,7 @@ public final class GrabHandler {
 		try {
 			item = MobItem.create(entity, serverLevel, config);
 		} catch (Exception e) {
-			MobGrabMod.LOGGER.error("Could not capture {}", entityId, e);
+			MobGrabMod.LOGGER.error("Could not capture {}", EntityType.getKey(entity.getType()), e);
 			refuse(player, "That mob could not be picked up.");
 			return InteractionResult.FAIL;
 		}
@@ -68,7 +76,14 @@ public final class GrabHandler {
 		Effects.play(serverLevel, entity.position(), config.pickupSound, config.pickupSoundVolume,
 				config.pickupSoundPitch, config.pickupParticle, config.pickupParticleCount);
 
-		entity.discard();
+		// The saved data includes Passengers, and discarding a vehicle only ejects its riders
+		// rather than removing them. Discarding the vehicle alone would leave a chicken
+		// jockey's zombie standing in the world while the item also holds a copy of it, so
+		// placing the item would duplicate the rider along with whatever it was carrying.
+		for (Entity ridden : entity.getSelfAndPassengers().toList()) {
+			ridden.discard();
+		}
+
 		if (!player.getInventory().add(item)) {
 			// getFreeSlot said there was room, so this should not happen — but dropping the
 			// item is the only outcome here that cannot lose the mob.
