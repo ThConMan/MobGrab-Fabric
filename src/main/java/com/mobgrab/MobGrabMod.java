@@ -4,6 +4,7 @@ import com.mobgrab.command.MobGrabCommand;
 import com.mobgrab.config.MobGrabConfig;
 import com.mobgrab.event.MobGrabEvents;
 import com.mobgrab.item.HeadTextures;
+import com.mobgrab.net.MobGrabServerNet;
 import com.mobgrab.preset.PresetStore;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -46,6 +47,7 @@ public final class MobGrabMod implements ModInitializer {
 		reload();
 
 		MobGrabEvents.register();
+		MobGrabServerNet.register();
 		// Checked when the command tree is built rather than here, because that happens after
 		// the config has been read and lets `enableCommands` actually suppress registration.
 		CommandRegistrationCallback.EVENT.register((dispatcher, buildContext, selection) -> {

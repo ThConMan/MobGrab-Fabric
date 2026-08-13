@@ -8,8 +8,8 @@ This is the Fabric port of the [MobGrab Paper plugin](https://thconman.github.io
 The plugin needs a Paper server; this does not, so it works in a **singleplayer world,
 including hardcore**, with no server, no operator and no cheats.
 
-- **Requires:** Minecraft **26.1.2 or newer** - Fabric Loader **0.18.4+** - Fabric API - Java 25
-- **Side:** server-side only
+- **Requires:** Minecraft **26.1.2 or newer** (verified on 26.1.2 and 26.2) - Fabric Loader **0.18.4+** - Fabric API - Java 25
+- **Side:** server-side. A client copy is optional and adds a menu and key mappings.
 
 ## Installing
 
@@ -31,6 +31,37 @@ skin texture rather than custom items.
 Nothing else is required. There is no GUI to open, no permission to grant, and no command
 you have to run first — which is the point, since a hardcore world usually has no way to run
 one.
+
+## Optional client menu and keys
+
+Installing MobGrab on a client as well adds a menu and two key mappings. None of it is
+required: the mod is still driven entirely from the server, a stock client can still join,
+and a client with the mod can still join a server without it.
+
+| Key | Default | Does |
+|---|---|---|
+| Open MobGrab menu | `G` | Mob toggles and the main settings, as the server currently has them |
+| Grab mob you are looking at | unbound | Grabs without sneaking. Left unbound so it never collides with an existing key |
+
+The menu shows the server's state, not a local copy. Pressing a toggle sends a request and
+the display only changes when the server's reply arrives, so it can never show a change the
+server refused. Non-operators see it read-only. On a server without MobGrab, the keys say so
+rather than doing nothing.
+
+Everything a client sends is re-checked on the server — permission, reach, config and
+cooldown — so binding the grab key is no more trusted than an ordinary right-click.
+
+## Presets
+
+Save a grabbed mob under a name and hand copies out later. Useful for a villager with
+particular trades. Stored in `config/mobgrab-presets.json` as readable SNBT.
+
+| Command | Description |
+|---|---|
+| `/mobgrab preset save <name>` | Save the mob item in your main hand |
+| `/mobgrab preset list` | List presets |
+| `/mobgrab preset give <players> <name>` | Give a preset mob item |
+| `/mobgrab preset delete <name>` | Remove a preset |
 
 ## Configuration
 
@@ -115,10 +146,10 @@ except `status` needs permission level 2 (`Permissions.COMMANDS_GAMEMASTER`).
 |---|---|
 | Paper server required | Runs anywhere, including singleplayer hardcore |
 | Permission nodes via LuckPerms | A single `requireOp` switch |
-| Admin chest GUI, Bedrock forms | Config file plus commands |
+| Admin chest GUI, Bedrock forms | Config file, commands, and an optional client menu on `G` |
 | WorldGuard / GriefPrevention / PlotSquared hooks | None — no mod equivalent to hook |
 | RoseStacker stack handling | None |
-| Villager preset engine | Not ported |
+| Villager preset engine | `/mobgrab preset`, saved from the item in your hand rather than the mob you are looking at |
 | Fireproofing via a damage event listener | The vanilla `damage_resistant` item component |
 | Entity state as an SNBT string | The entity's own save data, stored verbatim |
 
@@ -134,6 +165,20 @@ The jar lands in `build/libs/`. To build straight into an instance:
 
 ```bash
 ./gradlew build -PmodsDir=/path/to/.minecraft/mods
+```
+
+To build and test against another Minecraft version without editing anything:
+
+```bash
+./gradlew build -Pminecraft_version=26.2 -Pfabric_api_version=0.156.0+26.2
+```
+
+`tools/bincompat.py` checks that a jar built against one version still resolves against
+another, walking superclasses and interfaces the way the JVM does. Run it after any version
+bump:
+
+```bash
+python tools/bincompat.py build/libs/mobgrab-1.2.0.jar <built-version-jar> <target-version-jar> "MC 26.2"
 ```
 
 ## License

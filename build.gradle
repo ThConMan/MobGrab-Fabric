@@ -10,10 +10,15 @@ repositories {
 }
 
 loom {
-	// Server-side only mod: no client source set, no client entrypoint.
+	// The mod works with only src/main present: that is the whole server-side feature set.
+	// src/client adds a menu and key mappings for players who have MobGrab installed, and is
+	// never required — a stock client can still join a server running this.
+	splitEnvironmentSourceSets()
+
 	mods {
 		"mobgrab" {
 			sourceSet sourceSets.main
+			sourceSet sourceSets.client
 		}
 	}
 }

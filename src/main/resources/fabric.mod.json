@@ -17,6 +17,9 @@
 	"entrypoints": {
 		"main": [
 			"com.mobgrab.MobGrabMod"
+		],
+		"client": [
+			"com.mobgrab.client.MobGrabClient"
 		]
 	},
 	"depends": {

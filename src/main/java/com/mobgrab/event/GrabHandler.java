@@ -29,14 +29,8 @@ public final class GrabHandler {
 
 		if (!config.enabled) return InteractionResult.PASS;
 		if (hand != InteractionHand.MAIN_HAND) return InteractionResult.PASS;
-		if (!(entity instanceof LivingEntity)) return InteractionResult.PASS;
-		if (entity instanceof Player) return InteractionResult.PASS;
 		if (config.requireSneak && !player.isShiftKeyDown()) return InteractionResult.PASS;
-		if (config.hasDimensionRestrictions()
-				&& config.isDimensionDisabled(level.dimension().identifier().toString())) {
-			return InteractionResult.PASS;
-		}
-		if (!config.isMobEnabled(entity.getType())) return InteractionResult.PASS;
+		if (!isGrabbable(entity, level, config)) return InteractionResult.PASS;
 
 		// Everything past here is a decision only the server can make, and in singleplayer this
 		// callback runs on both sides. Claiming the interaction on the client too stops the
@@ -44,6 +38,32 @@ public final class GrabHandler {
 		if (level.isClientSide()) return InteractionResult.SUCCESS;
 		if (!(level instanceof ServerLevel serverLevel)) return InteractionResult.PASS;
 
+		return grab(player, serverLevel, entity, config);
+	}
+
+	/**
+	 * Whether this entity is one MobGrab handles here at all. Kept allocation-free: it runs on
+	 * every right-click of every entity, long before anything interesting happens.
+	 */
+	public static boolean isGrabbable(Entity entity, Level level, MobGrabConfig config) {
+		if (!(entity instanceof LivingEntity)) return false;
+		if (entity instanceof Player) return false;
+		if (config.hasDimensionRestrictions()
+				&& config.isDimensionDisabled(level.dimension().identifier().toString())) {
+			return false;
+		}
+		return config.isMobEnabled(entity.getType());
+	}
+
+	/**
+	 * Performs the grab, having already established that the mob is eligible.
+	 *
+	 * <p>Shared by the right-click path and the optional grab key, so a client that binds the
+	 * key gets exactly the same permission, cooldown, inventory and rider checks rather than a
+	 * more trusting second route into the same operation.
+	 */
+	public static InteractionResult grab(Player player, ServerLevel level, Entity entity,
+	                                     MobGrabConfig config) {
 		if (config.requireOp && !player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
 			refuse(player, "You do not have permission to pick up mobs.");
 			return InteractionResult.FAIL;
@@ -66,14 +86,14 @@ public final class GrabHandler {
 
 		ItemStack item;
 		try {
-			item = MobItem.create(entity, serverLevel, config);
+			item = MobItem.create(entity, level, config);
 		} catch (Exception e) {
 			MobGrabMod.LOGGER.error("Could not capture {}", EntityType.getKey(entity.getType()), e);
 			refuse(player, "That mob could not be picked up.");
 			return InteractionResult.FAIL;
 		}
 
-		Effects.play(serverLevel, entity.position(), config.pickupSound, config.pickupSoundVolume,
+		Effects.play(level, entity.position(), config.pickupSound, config.pickupSoundVolume,
 				config.pickupSoundPitch, config.pickupParticle, config.pickupParticleCount);
 
 		// The saved data includes Passengers, and discarding a vehicle only ejects its riders
