@@ -1,0 +1,76 @@
+plugins {
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+}
+
+version = project.mod_version
+group = project.maven_group
+
+repositories {
+	// Loom adds the Minecraft/library repositories automatically.
+}
+
+loom {
+	// Server-side only mod: no client source set, no client entrypoint.
+	mods {
+		"mobgrab" {
+			sourceSet sourceSets.main
+		}
+	}
+}
+
+dependencies {
+	// To change the versions see the gradle.properties file
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+	// Minecraft 26.1+ ships unobfuscated, so Loom does not remap: no `mappings` line,
+	// and mod dependencies use plain `implementation` instead of `modImplementation`.
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	testImplementation "net.fabricmc:fabric-loader-junit:${project.loader_version}"
+	testImplementation "org.junit.jupiter:junit-jupiter:5.11.4"
+	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+}
+
+// Let the terminal drive the dev server's console, so `stop` and `/mobgrab ...` work from
+// the same shell that launched it.
+tasks.withType(JavaExec).configureEach {
+	standardInput = System.in
+}
+
+processResources {
+	def version = project.version
+	inputs.property "version", version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 25
+	it.options.encoding = "UTF-8"
+}
+
+java {
+	withSourcesJar()
+
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
+}
+
+test {
+	useJUnitPlatform()
+}
+
+jar {
+	from("LICENSE") {
+		rename { "${it}_mobgrab" }
+	}
+
+	// Default output is build/libs/mobgrab-<version>.jar.
+	// Override with -PmodsDir=/path/to/.minecraft/mods to build straight into an instance.
+	(project.findProperty("modsDir") as String)?.with {
+		destinationDirectory.set(file(it))
+	}
+}

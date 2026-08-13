@@ -1,0 +1,28 @@
+{
+	"schemaVersion": 1,
+	"id": "mobgrab",
+	"version": "${version}",
+	"name": "MobGrab",
+	"description": "Sneak + right-click a mob to pick it up as a head item, right-click a block to put it back — with every scrap of its data intact. Works in singleplayer (including hardcore), on LAN, and on dedicated servers. Server-side only: nothing to install on the client.",
+	"authors": [
+		"Con"
+	],
+	"contact": {
+		"homepage": "https://thconman.github.io/MobGrab/",
+		"sources": "https://github.com/ThConMan/MobGrab-Fabric",
+		"issues": "https://github.com/ThConMan/MobGrab-Fabric/issues"
+	},
+	"license": "MIT",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.mobgrab.MobGrabMod"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.19.3",
+		"minecraft": ">=26.1.2",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}

@@ -1,0 +1,135 @@
+# MobGrab (Fabric)
+
+Sneak + right-click a mob to pick it up as a head item; right-click a block to set it back
+down with everything about it intact — health, equipment, trades, profession, variant, age,
+name, anger, passengers.
+
+This is the Fabric port of the [MobGrab Paper plugin](https://thconman.github.io/MobGrab/).
+The plugin needs a Paper server; this does not, so it works in a **singleplayer world,
+including hardcore**, with no server, no operator and no cheats.
+
+- **Requires:** Minecraft **26.1.2 or newer** - Fabric Loader **0.19.3+** - Fabric API - Java 25
+- **Side:** server-side only
+
+## Installing
+
+Drop `mobgrab-<version>.jar` and Fabric API into your `mods` folder.
+
+"Server-side only" means the mod runs on the logical server. In a singleplayer or hardcore
+world that server is the one inside your own game, so a normal single install is all it takes.
+On a dedicated server, only the server needs it — players can join with a stock Minecraft
+install and still see the mob heads, because the heads are ordinary player heads carrying a
+skin texture rather than custom items.
+
+## Using it
+
+| Action | Result |
+|---|---|
+| Sneak + right-click a mob | Picks it up into your inventory |
+| Right-click a block holding a mob item | Puts the mob back on that face |
+
+Nothing else is required. There is no GUI to open, no permission to grant, and no command
+you have to run first — which is the point, since a hardcore world usually has no way to run
+one.
+
+## Configuration
+
+Everything lives in `config/mobgrab.json`, written on first launch and re-read by
+`/mobgrab reload`. Options added by a later MobGrab version appear in the file automatically
+on the next start, with their defaults, rather than staying invisible.
+
+| Option | Default | Meaning |
+|---|---|---|
+| `enabled` | `true` | Master switch |
+| `requireSneak` | `true` | Require sneaking to grab. Turning this off makes a bare right-click grab, which collides with trading, riding and shearing |
+| `requireOp` | `false` | Restrict to operators. **Off** by default so singleplayer and hardcore need no setup |
+| `cooldownSeconds` | `1.0` | Per-player spacing between grabs, counted in game ticks so a paused world does not burn it |
+| `blacklistMode` | `false` | Meaning of the `mobs` list (see below) |
+| `allowNewMobsByDefault` | `true` | What to do with a mob the list does not mention — how mobs from a newer Minecraft arrive |
+| `fireproofItems` | `true` | Mob items survive fire and lava |
+| `itemDamageImmunity` | `["minecraft:is_fire"]` | Damage-type tags the item ignores while fireproofing is on |
+| `keepMobNameOnItem` | `true` | A named pet keeps its name on the item |
+| `showLore` | `true` | Health, age and villager profession on the tooltip |
+| `disabledDimensions` | `[]` | Dimensions where MobGrab is fully off, e.g. `"minecraft:the_nether"` |
+| `pickupSound` / `placeSound` | chicken egg / enderman teleport | Sound ids, with `…Volume` and `…Pitch` alongside |
+| `pickupParticle` / `placeParticle` | smoke / happy villager | Particle ids, with `…Count` alongside |
+| `mobs` | 91 entries | Per-mob toggles, keyed by entity id |
+
+### Fireproofing
+
+`fireproofItems` gives the item the same `damage_resistant` component netherite gear uses, so
+a pocketed mob survives being dropped in lava. Because it is a real item component rather
+than an event handler, it holds up in every situation the game applies fire damage in.
+
+`itemDamageImmunity` decides which damage that covers. It takes damage-type tags, so you can
+widen it:
+
+```json
+"itemDamageImmunity": ["minecraft:is_fire", "minecraft:is_explosion"]
+```
+
+Toggling `fireproofItems` affects **newly grabbed** mobs. Items grabbed earlier keep the
+component they were made with.
+
+### The mob list
+
+An explicit entry in `mobs` always wins, so both modes agree on every mob the file lists.
+The modes only differ for ids that are absent — a mob added by a newer Minecraft version —
+where blacklist mode admits it and whitelist mode does not, unless `allowNewMobsByDefault`
+overrides that.
+
+Ids that do not exist on your version are ignored rather than treated as errors, so one
+config file works across 26.1.2 and everything after it. Giant, warden, wither and the ender
+dragon ship disabled.
+
+## Commands
+
+Optional, and all of them only restate what the config file already controls. Everything
+except `status` needs permission level 2 (`Permissions.COMMANDS_GAMEMASTER`).
+
+| Command | Description |
+|---|---|
+| `/mobgrab status` | Current settings and how many mobs are grabbable |
+| `/mobgrab reload` | Re-read `config/mobgrab.json` |
+| `/mobgrab fireproof <true\|false>` | Toggle fireproofing for future grabs |
+| `/mobgrab enable\|disable <mob>` | Toggle one mob, by entity id |
+
+## Notes on hardcore
+
+- Nothing needs enabling. `requireOp` is off, so the mod works with cheats disabled.
+- The cooldown counts game ticks, not wall-clock time, so pausing does not consume it.
+- Grabbing checks for a free inventory slot *before* removing the mob, so a full inventory
+  can never delete one.
+- The stored UUID is dropped when a mob becomes an item, so a duplicated item cannot spawn
+  two entities claiming to be the same one and corrupt leads, mounts or pet ownership.
+
+## Differences from the Paper plugin
+
+| Plugin | This mod |
+|---|---|
+| Paper server required | Runs anywhere, including singleplayer hardcore |
+| Permission nodes via LuckPerms | A single `requireOp` switch |
+| Admin chest GUI, Bedrock forms | Config file plus commands |
+| WorldGuard / GriefPrevention / PlotSquared hooks | None — no mod equivalent to hook |
+| RoseStacker stack handling | None |
+| Villager preset engine | Not ported |
+| Fireproofing via a damage event listener | The vanilla `damage_resistant` item component |
+| Entity state as an SNBT string | The entity's own save data, stored verbatim |
+
+## Building
+
+Requires JDK 25. The Gradle wrapper is included.
+
+```bash
+./gradlew build
+```
+
+The jar lands in `build/libs/`. To build straight into an instance:
+
+```bash
+./gradlew build -PmodsDir=/path/to/.minecraft/mods
+```
+
+## License
+
+MIT — see [LICENSE](LICENSE).
