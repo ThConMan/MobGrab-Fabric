@@ -4,6 +4,7 @@ import com.mobgrab.command.MobGrabCommand;
 import com.mobgrab.config.MobGrabConfig;
 import com.mobgrab.event.MobGrabEvents;
 import com.mobgrab.item.HeadTextures;
+import com.mobgrab.preset.PresetStore;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import org.slf4j.Logger;
@@ -28,8 +29,15 @@ public final class MobGrabMod implements ModInitializer {
 		return config;
 	}
 
+	private static final PresetStore PRESETS = new PresetStore();
+
+	public static PresetStore presets() {
+		return PRESETS;
+	}
+
 	public static void reload() {
 		config = MobGrabConfig.load();
+		PRESETS.load();
 	}
 
 	@Override

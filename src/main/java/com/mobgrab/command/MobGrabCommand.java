@@ -60,7 +60,8 @@ public final class MobGrabCommand {
 						.requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
 						.then(Commands.argument("mob", IdentifierArgument.id())
 								.suggests(MOB_IDS)
-								.executes(context -> toggle(context, false)))));
+								.executes(context -> toggle(context, false))))
+				.then(PresetCommand.build()));
 	}
 
 	/**
@@ -81,6 +82,10 @@ public final class MobGrabCommand {
 			usage(source, "/mobgrab fireproof <true|false>", "fireproof newly grabbed mobs");
 			usage(source, "/mobgrab enable <mob>", "allow a mob to be grabbed");
 			usage(source, "/mobgrab disable <mob>", "stop a mob being grabbed");
+			usage(source, "/mobgrab preset list", "list saved mob presets");
+			usage(source, "/mobgrab preset save <name>", "save the mob item you are holding");
+			usage(source, "/mobgrab preset give <players> <name>", "hand out a preset");
+			usage(source, "/mobgrab preset delete <name>", "remove a preset");
 		} else {
 			source.sendSuccess(() -> Component.literal(
 					"Everything else is configured in config/mobgrab.json.")
