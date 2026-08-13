@@ -8,7 +8,7 @@ This is the Fabric port of the [MobGrab Paper plugin](https://thconman.github.io
 The plugin needs a Paper server; this does not, so it works in a **singleplayer world,
 including hardcore**, with no server, no operator and no cheats.
 
-- **Requires:** Minecraft **26.1.2 or newer** - Fabric Loader **0.19.3+** - Fabric API - Java 25
+- **Requires:** Minecraft **26.1.2 or newer** - Fabric Loader **0.18.4+** - Fabric API - Java 25
 - **Side:** server-side only
 
 ## Installing
