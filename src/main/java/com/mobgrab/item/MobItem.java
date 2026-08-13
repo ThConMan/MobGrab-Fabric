@@ -18,8 +18,6 @@ import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.component.DamageResistant;
@@ -80,7 +78,7 @@ public final class MobItem {
 		stack.set(DataComponents.CUSTOM_DATA, CustomData.of(root));
 		stack.set(DataComponents.CUSTOM_NAME, itemName(entity, config));
 		if (config.showLore) {
-			List<Component> lore = lore(entity);
+			List<Component> lore = MobLore.build(entity, data);
 			if (!lore.isEmpty()) stack.set(DataComponents.LORE, new ItemLore(lore));
 		}
 		applyDamageImmunity(stack, level, config);
@@ -140,32 +138,6 @@ public final class MobItem {
 		return name.withStyle(style -> style.withItalic(false).withColor(ChatFormatting.GOLD));
 	}
 
-	private static List<Component> lore(Entity entity) {
-		List<Component> lore = new ArrayList<>();
-		if (entity instanceof LivingEntity living) {
-			lore.add(line("Health", "%.0f / %.0f".formatted(living.getHealth(), living.getMaxHealth())));
-			if (living.isBaby()) lore.add(line("Age", "Baby"));
-		}
-		if (entity instanceof Villager villager) {
-			Holder<?> profession = villager.getVillagerData().profession();
-			profession.unwrapKey().ifPresent(key ->
-					lore.add(line("Profession", prettify(key.identifier().getPath()))));
-			lore.add(line("Level", String.valueOf(villager.getVillagerData().level())));
-		}
-		return lore;
-	}
-
-	private static Component line(String label, String value) {
-		return Component.literal(label + ": ")
-				.withStyle(style -> style.withItalic(false).withColor(ChatFormatting.GRAY))
-				.append(Component.literal(value)
-						.withStyle(style -> style.withItalic(false).withColor(ChatFormatting.WHITE)));
-	}
-
-	private static String prettify(String path) {
-		String spaced = path.replace('_', ' ');
-		return spaced.isEmpty() ? spaced : Character.toUpperCase(spaced.charAt(0)) + spaced.substring(1);
-	}
 
 	/**
 	 * Makes the item shrug off fire and lava by giving it the same {@code damage_resistant}

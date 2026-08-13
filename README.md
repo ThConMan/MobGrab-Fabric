@@ -32,6 +32,25 @@ Nothing else is required. There is no GUI to open, no permission to grant, and n
 you have to run first — which is the point, since a hardcore world usually has no way to run
 one.
 
+## What the item tells you
+
+The head carries the mob's full state as tooltip lore, ported from the plugin:
+
+- Type, custom name, exact health, and tamed owner
+- **Villager**: profession, level, and every trade — `6x Pumpkin -> Emerald` — with
+  exhausted trades struck through, and enchanted-book trades naming the enchantment
+- **Variants**: horse colour and markings, cat type and collar, wolf collar, sheep colour,
+  axolotl, frog, parrot, fox, rabbit, mooshroom, llama colour and strength, panda gene,
+  tropical fish pattern and both colours, shulker colour, copper golem weathering
+- **States**: charged creeper, sheared, screaming goat and missing horns, bee nectar/stung/angry,
+  slime and magma cube size, phantom size, pufferfish puff, shivering strider, active creaking,
+  baby, sitting, and anger on any mob that tracks it
+- **Equipment**: every worn and held item, with its enchantments listed underneath
+
+Turn it off with `showLore: false` if you prefer a bare head.
+
+Trade lines carry no emoji item icons, unlike the plugin's.
+
 ## Optional client menu and keys
 
 Installing MobGrab on a client as well adds a menu and two key mappings. None of it is
@@ -150,6 +169,8 @@ except `status` needs permission level 2 (`Permissions.COMMANDS_GAMEMASTER`).
 | WorldGuard / GriefPrevention / PlotSquared hooks | None — no mod equivalent to hook |
 | RoseStacker stack handling | None |
 | Villager preset engine | `/mobgrab preset`, saved from the item in your hand rather than the mob you are looking at |
+| Item lore describing the mob | Ported in full, minus the emoji icons on trade lines |
+| `/mobgrab update` self-updater | Not ported — mod launchers handle updates |
 | Fireproofing via a damage event listener | The vanilla `damage_resistant` item component |
 | Entity state as an SNBT string | The entity's own save data, stored verbatim |
 
