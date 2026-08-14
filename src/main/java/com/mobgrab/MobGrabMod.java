@@ -4,6 +4,7 @@ import com.mobgrab.command.MobGrabCommand;
 import com.mobgrab.config.MobGrabConfig;
 import com.mobgrab.event.MobGrabEvents;
 import com.mobgrab.item.HeadTextures;
+import com.mobgrab.item.TradeIcons;
 import com.mobgrab.net.MobGrabServerNet;
 import com.mobgrab.preset.PresetStore;
 import net.fabricmc.api.ModInitializer;
@@ -44,6 +45,7 @@ public final class MobGrabMod implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		HeadTextures.load();
+		TradeIcons.load();
 		reload();
 
 		MobGrabEvents.register();

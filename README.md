@@ -54,9 +54,21 @@ The head carries the mob's full state as tooltip lore, ported from the plugin:
 
 Turn it off with `showLore: false` if you prefer a bare head.
 
-Trade lines carry no emoji item icons, unlike the plugin's. Everything else matches it,
+Trade lines carry the plugin's emoji item icons, generated from its own mapping
+(161 icons, 13 shortened names). Everything else matches it too,
 including the wording where vanilla and Bukkit disagree: a rabbit still reads "Salt And
 Pepper" rather than vanilla's "Salt", and a parrot "Red" rather than "Red Blue".
+
+## The menu
+
+`/mobgrab gui` opens a chest menu of every mob, each as its own head, green for grabbable and
+red for not. Click one to toggle it; the bottom row pages through and the book shows the
+current settings. Non-operators can look but not change anything.
+
+This is an ordinary container screen, so it needs **nothing installed on the client** — a
+stock Minecraft client on a dedicated server gets it, exactly as the Paper plugin's did.
+Nothing in it can be taken out: every slot is a painted button, and both normal and
+shift-clicks are intercepted.
 
 ## Optional client menu and keys
 
@@ -172,7 +184,8 @@ except `status` needs permission level 2 (`Permissions.COMMANDS_GAMEMASTER`).
 |---|---|
 | Paper server required | Runs anywhere, including singleplayer hardcore |
 | Permission nodes via LuckPerms | A single `requireOp` switch |
-| Admin chest GUI, Bedrock forms | Config file, commands, and an optional client menu on `G` |
+| Admin chest GUI | `/mobgrab gui`, a real container menu that needs nothing on the client |
+| Bedrock forms | Not applicable — no Geyser in a mod context |
 | WorldGuard / GriefPrevention / PlotSquared hooks | None — no mod equivalent to hook |
 | RoseStacker stack handling | None |
 | Villager preset engine | `/mobgrab preset`, saved from the item in your hand rather than the mob you are looking at |

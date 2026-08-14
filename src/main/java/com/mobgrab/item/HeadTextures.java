@@ -99,12 +99,19 @@ public final class HeadTextures {
 	 * pocketed librarian still looks like a librarian.
 	 */
 	public static ItemStack headFor(Entity entity) {
-		Identifier id = EntityType.getKey(entity.getType());
-
 		if (entity instanceof Villager villager) {
 			String professionTexture = professionTexture(villager);
 			if (professionTexture != null) return texturedHead(professionTexture);
 		}
+		return headFor(entity.getType());
+	}
+
+	/**
+	 * The head for a type with no live entity behind it — the toggle menu listing mobs, say.
+	 * A villager resolves to the generic villager head, since there is no profession to read.
+	 */
+	public static ItemStack headFor(EntityType<?> type) {
+		Identifier id = EntityType.getKey(type);
 
 		Item skull = NATIVE_SKULLS.get(id);
 		if (skull != null) return new ItemStack(skull);

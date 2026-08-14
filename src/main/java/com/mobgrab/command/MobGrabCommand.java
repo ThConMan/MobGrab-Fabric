@@ -42,6 +42,9 @@ public final class MobGrabCommand {
 				.executes(MobGrabCommand::help)
 				.then(Commands.literal("help")
 						.executes(MobGrabCommand::help))
+				.then(Commands.literal("gui")
+						.requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
+						.executes(MobGrabCommand::gui))
 				.then(Commands.literal("status")
 						.executes(MobGrabCommand::status))
 				.then(Commands.literal("reload")
@@ -78,6 +81,7 @@ public final class MobGrabCommand {
 						+ "right-click a block to put it back.").withStyle(ChatFormatting.GRAY)), false);
 		usage(source, "/mobgrab status", "show current settings");
 		if (admin) {
+			usage(source, "/mobgrab gui", "open the mob-toggle menu");
 			usage(source, "/mobgrab reload", "re-read config/mobgrab.json");
 			usage(source, "/mobgrab fireproof <true|false>", "fireproof newly grabbed mobs");
 			usage(source, "/mobgrab enable <mob>", "allow a mob to be grabbed");
@@ -97,6 +101,17 @@ public final class MobGrabCommand {
 	private static void usage(CommandSourceStack source, String command, String description) {
 		source.sendSuccess(() -> Component.literal(command).withStyle(ChatFormatting.YELLOW)
 				.append(Component.literal(" - " + description).withStyle(ChatFormatting.GRAY)), false);
+	}
+
+	/** Opens the chest menu. Works for any client, since it is an ordinary container screen. */
+	private static int gui(CommandContext<CommandSourceStack> context) {
+		try {
+			com.mobgrab.gui.MobToggleMenu.open(context.getSource().getPlayerOrException());
+			return 1;
+		} catch (com.mojang.brigadier.exceptions.CommandSyntaxException e) {
+			context.getSource().sendFailure(Component.literal("Only a player can open the menu."));
+			return 0;
+		}
 	}
 
 	private static int status(CommandContext<CommandSourceStack> context) {

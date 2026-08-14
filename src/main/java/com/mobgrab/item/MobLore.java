@@ -60,8 +60,8 @@ import java.util.Set;
  * The tooltip on a grabbed mob: everything the game knows about it that a player would want
  * to see before deciding to put it back down.
  *
- * <p>Ported from the MobGrab plugin's item lore. The plugin decorated trade lines with emoji
- * item icons; those are left out here deliberately.
+ * <p>Ported from the MobGrab plugin's item lore, including the emoji item icons on trade
+ * lines. Those come from a bundled resource generated from the plugin's own mapping.
  *
  * <p>Every branch is defensive about absent data. Lore is cosmetic, so a species accessor
  * throwing or returning null must never be the reason a mob cannot be picked up.
@@ -307,10 +307,15 @@ public final class MobLore {
 	}
 
 	private static Component tradeItem(ItemStack stack) {
-		String name = stack.getHoverName().getString();
+		// A renamed item keeps its own name; otherwise use the plugin's shortened one where it
+		// had a nicer wording for it ("Steak" rather than "Cooked Beef").
+		String shortName = stack.has(DataComponents.CUSTOM_NAME) ? null : TradeIcons.shortNameFor(stack);
+		String name = shortName != null ? shortName : stack.getHoverName().getString();
 		String display = stack.getCount() > 1 ? stack.getCount() + "x " + name : name;
 
-		MutableComponent text = Component.literal(display).withStyle(ChatFormatting.GRAY);
+		MutableComponent text = Component.literal(TradeIcons.iconFor(stack) + " ")
+				.withStyle(ChatFormatting.WHITE)
+				.append(Component.literal(display).withStyle(ChatFormatting.GRAY));
 		String enchants = enchantSummary(stack);
 		if (!enchants.isEmpty()) {
 			text.append(Component.literal(" (" + enchants + ")").withStyle(ChatFormatting.LIGHT_PURPLE));
