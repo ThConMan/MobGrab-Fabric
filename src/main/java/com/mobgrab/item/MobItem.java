@@ -13,11 +13,13 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.component.DamageResistant;
@@ -36,6 +38,19 @@ import java.util.Optional;
  * leash, passengers — survives the round trip without MobGrab needing to know it exists.
  */
 public final class MobItem {
+
+	/**
+	 * Drops an item at the player's feet for them to pick up, the way /give does when the
+	 * inventory is full. Player.drop() swings the arm since 26.3, so vanilla's give command
+	 * builds the entity itself and so do we.
+	 */
+	public static void dropFor(ServerPlayer player, ItemStack stack) {
+		ItemEntity dropped = player.createItemStackToDrop(stack, false, false);
+		if (dropped == null) return;
+		dropped.setNoPickUpDelay();
+		dropped.setTarget(player.getUUID());
+		dropped.level().addFreshEntity(dropped);
+	}
 
 	/** Our root key inside the item's custom_data. */
 	private static final String ROOT = "MobGrab";

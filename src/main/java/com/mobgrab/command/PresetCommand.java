@@ -143,7 +143,7 @@ public final class PresetCommand {
 
 		for (ServerPlayer target : targets) {
 			ItemStack copy = template.copy();
-			if (!target.getInventory().add(copy)) target.drop(copy, false);
+			if (!target.getInventory().add(copy)) MobItem.dropFor(target, copy);
 		}
 
 		int count = targets.size();

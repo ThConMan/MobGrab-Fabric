@@ -8,7 +8,7 @@ This is the Fabric port of the [MobGrab Paper plugin](https://thconman.github.io
 The plugin needs a Paper server; this does not, so it works in a **singleplayer world,
 including hardcore**, with no server, no operator and no cheats.
 
-- **Requires:** Minecraft **26.2 or newer** - Fabric Loader **0.18.4+** - Fabric API - Java 25
+- **Requires:** Minecraft **26.3 or newer** - Fabric Loader **0.18.4+** - Fabric API - Java 25
 - **Side:** server-side. A client copy is optional and adds a menu and key mappings.
 
 ## Installing
@@ -211,7 +211,7 @@ The jar lands in `build/libs/`. To build straight into an instance:
 To build and test against another Minecraft version without editing anything:
 
 ```bash
-./gradlew build -Pminecraft_version=26.2 -Pfabric_api_version=0.156.0+26.2
+./gradlew build -Pminecraft_version=26.3 -Pfabric_api_version=0.161.0+26.3
 ```
 
 `tools/bincompat.py` checks that a jar built against one version still resolves against
@@ -219,7 +219,7 @@ another, walking superclasses and interfaces the way the JVM does. Run it after 
 bump:
 
 ```bash
-python tools/bincompat.py build/libs/mobgrab-1.2.0.jar <built-version-jar> <target-version-jar> "MC 26.2"
+python tools/bincompat.py build/libs/mobgrab-1.7.0.jar <built-version-jar> <target-version-jar> "MC 26.3"
 ```
 
 ## License

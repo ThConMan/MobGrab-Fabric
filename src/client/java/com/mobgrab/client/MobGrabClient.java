@@ -52,10 +52,10 @@ public final class MobGrabClient implements ClientModInitializer {
 		// vanilla. The grab key ships unbound: sneak + right-click already does the job, so it
 		// is a convenience to opt into rather than another default to collide with.
 		openMenu = KeyMappingHelper.registerKeyMapping(new KeyMapping(
-				"key.mobgrab.menu", InputConstants.Type.KEYSYM, InputConstants.KEY_G,
+				"key.mobgrab.menu", InputConstants.Type.KEYBOARD, InputConstants.KEY_G,
 				KeyMapping.Category.MISC));
 		grabLooked = KeyMappingHelper.registerKeyMapping(new KeyMapping(
-				"key.mobgrab.grab", InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(),
+				"key.mobgrab.grab", InputConstants.Type.KEYBOARD, InputConstants.UNKNOWN.getValue(),
 				KeyMapping.Category.GAMEPLAY));
 
 		ClientPlayNetworking.registerGlobalReceiver(MobGrabPayloads.Sync.TYPE,

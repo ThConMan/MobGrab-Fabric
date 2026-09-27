@@ -7,6 +7,7 @@ import com.mobgrab.util.Effects;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.permissions.Permissions;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -107,7 +108,7 @@ public final class GrabHandler {
 		if (!player.getInventory().add(item)) {
 			// getFreeSlot said there was room, so this should not happen — but dropping the
 			// item is the only outcome here that cannot lose the mob.
-			player.drop(item, false);
+			MobItem.dropFor((ServerPlayer) player, item);
 		}
 
 		Cooldowns.mark(player, level);

@@ -41,7 +41,7 @@ import net.minecraft.world.entity.monster.Shulker;
 import net.minecraft.world.entity.monster.Phantom;
 import net.minecraft.world.entity.monster.Strider;
 import net.minecraft.world.entity.monster.creaking.Creaking;
-import net.minecraft.world.entity.monster.EnderMan;
+import net.minecraft.world.entity.monster.Enderman;
 import net.minecraft.world.entity.monster.zombie.ZombieVillager;
 import net.minecraft.world.entity.npc.villager.AbstractVillager;
 import net.minecraft.world.entity.npc.villager.Villager;
@@ -145,7 +145,7 @@ public final class MobLore {
 						ChatFormatting.YELLOW));
 				if (zombie.isConverting()) lore.add(tag("Curing", ChatFormatting.GREEN));
 			}
-			case EnderMan enderman -> {
+			case Enderman enderman -> {
 				BlockState carried = enderman.getCarriedBlock();
 				if (carried != null && !carried.isAir()) {
 					lore.add(label("Carrying", carried.getBlock().getName().getString(),
