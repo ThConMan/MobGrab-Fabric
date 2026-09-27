@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.mobgrab.MobGrabMod;
+import com.mobgrab.item.MobItem;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
@@ -36,8 +37,11 @@ public final class PresetStore {
 
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
-	/** One saved mob. {@code entity} is the entity id; {@code data} is its save data as SNBT. */
-	private record Preset(String entity, String data) {}
+	/**
+	 * One saved mob. {@code entity} is the entity id; {@code data} is its save data as SNBT;
+	 * {@code dataVersion} is the game data version it was saved at (absent before 1.7.0).
+	 */
+	private record Preset(String entity, String data, Integer dataVersion) {}
 
 	/** The JSON document itself. */
 	private static final class Document {
@@ -107,7 +111,7 @@ public final class PresetStore {
 
 	/** Stores {@code data} under {@code name}, replacing any preset already there. */
 	public void put(String name, String entityId, CompoundTag data) {
-		document.presets.put(normalise(name), new Preset(entityId, data.toString()));
+		document.presets.put(normalise(name), new Preset(entityId, data.toString(), MobItem.currentDataVersion()));
 		save();
 	}
 
@@ -125,7 +129,9 @@ public final class PresetStore {
 		Preset preset = document.presets.get(normalise(name));
 		if (preset == null) return Optional.empty();
 		try {
-			return Optional.of(TagParser.parseCompoundFully(preset.data()));
+			CompoundTag data = TagParser.parseCompoundFully(preset.data());
+			int version = preset.dataVersion() != null ? preset.dataVersion() : MobItem.LEGACY_DATA_VERSION;
+			return Optional.of(MobItem.upgrade(preset.entity(), data, version));
 		} catch (Exception e) {
 			MobGrabMod.LOGGER.warn("Preset '{}' has unreadable data: {}", name, e.getMessage());
 			return Optional.empty();

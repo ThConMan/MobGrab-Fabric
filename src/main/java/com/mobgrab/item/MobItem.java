@@ -8,7 +8,10 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
+import com.mojang.serialization.Dynamic;
+import net.minecraft.SharedConstants;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
@@ -16,6 +19,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.ProblemReporter;
+import net.minecraft.util.datafix.DataFixers;
+import net.minecraft.util.datafix.fixes.References;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -56,6 +61,11 @@ public final class MobItem {
 	private static final String ROOT = "MobGrab";
 	/** Bumped only if the stored layout ever changes; old items are rejected rather than misread. */
 	private static final int FORMAT = 1;
+	/**
+	 * Data version of Minecraft 26.2, which wrote every item from before MobGrab stored one
+	 * (1.6.0 required 26.2). Unversioned data is upgraded from here.
+	 */
+	public static final int LEGACY_DATA_VERSION = 4903;
 
 	private MobItem() {}
 
@@ -83,6 +93,7 @@ public final class MobItem {
 
 		CompoundTag stored = new CompoundTag();
 		stored.putInt("v", FORMAT);
+		stored.putInt("dv", currentDataVersion());
 		stored.putString("id", id.toString());
 		stored.put("data", data);
 
@@ -134,7 +145,34 @@ public final class MobItem {
 			return Optional.empty();
 		}
 
-		return Optional.of(new Grabbed(type.get(), stored.getCompoundOrEmpty("data")));
+		CompoundTag data = upgrade(id.get(), stored.getCompoundOrEmpty("data"),
+				stored.getIntOr("dv", LEGACY_DATA_VERSION));
+		return Optional.of(new Grabbed(type.get(), data));
+	}
+
+	public static int currentDataVersion() {
+		return SharedConstants.getCurrentVersion().dataVersion().version();
+	}
+
+	/**
+	 * Brings mob data written by an older game version up to this one.
+	 *
+	 * <p>It lives in custom_data, which a world upgrade never looks inside, so it has to go
+	 * through the fixers here the way the world's own entities did. Skipping this silently
+	 * loses whatever changed format: 26.3 made block states strings, and an enderman picked
+	 * up on 26.2 came back without the block it was holding. ENTITY_TREE rather than ENTITY
+	 * so riders are upgraded too.
+	 */
+	public static CompoundTag upgrade(String entityId, CompoundTag data, int fromVersion) {
+		int current = currentDataVersion();
+		if (fromVersion >= current) return data;
+		CompoundTag tagged = data.copy();
+		tagged.putString("id", entityId);
+		CompoundTag fixed = (CompoundTag) DataFixers.getDataFixer()
+				.update(References.ENTITY_TREE, new Dynamic<>(NbtOps.INSTANCE, tagged), fromVersion, current)
+				.getValue();
+		fixed.remove("id");
+		return fixed;
 	}
 
 	public static boolean isMobItem(ItemStack stack) {
